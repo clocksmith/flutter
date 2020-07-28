@@ -12,6 +12,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import 'colors.dart';
+import 'material_state.dart';
 import 'theme.dart';
 import 'theme_data.dart';
 
@@ -942,6 +943,7 @@ abstract class SliderComponentShape {
     double value,
     double textScaleFactor,
     Size sizeWithOverflow,
+    MaterialState materialState,
   });
 
   /// Special instance of [SliderComponentShape] to skip the thumb drawing.
@@ -2266,6 +2268,7 @@ class _EmptySliderComponentShape extends SliderComponentShape {
     double value,
     double textScaleFactor,
     Size sizeWithOverflow,
+    MaterialState materialState,
   }) {
     // no-op.
   }
@@ -2340,6 +2343,7 @@ class RoundSliderThumbShape extends SliderComponentShape {
     double value,
     double textScaleFactor,
     Size sizeWithOverflow,
+    MaterialState materialState,
   }) {
     assert(context != null);
     assert(center != null);
@@ -2514,6 +2518,10 @@ class RoundSliderOverlayShape extends SliderComponentShape {
   /// used.
   final double overlayRadius;
 
+  static const double _hoveredOpacity = 0.04;
+  static const double _focusedOpacity = 0.12;
+  static const double _pressedRippleOpacity = 0.10;
+
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) {
     return Size.fromRadius(overlayRadius);
@@ -2533,6 +2541,7 @@ class RoundSliderOverlayShape extends SliderComponentShape {
     @required double value,
     double textScaleFactor,
     Size sizeWithOverflow,
+    MaterialState materialState,
   }) {
     assert(context != null);
     assert(center != null);
@@ -2544,17 +2553,37 @@ class RoundSliderOverlayShape extends SliderComponentShape {
     assert(textDirection != null);
     assert(value != null);
 
+    if (materialState == null) {
+      return;
+    }
+
     final Canvas canvas = context.canvas;
     final Tween<double> radiusTween = Tween<double>(
       begin: 0.0,
       end: overlayRadius,
     );
 
+    // Paint an overlay circle. Also paint an extra inner ripple if its pressed.
+
+    final double baseOverlayOpacity = materialState == MaterialState.hovered ? _hoveredOpacity : _focusedOpacity;
     canvas.drawCircle(
       center,
-      radiusTween.evaluate(activationAnimation),
-      Paint()..color = sliderTheme.overlayColor,
+//      radiusTween.evaluate(activationAnimation), // TODO use a fade in animation?
+        overlayRadius,
+      Paint()
+        ..color = sliderTheme.overlayColor.withOpacity(baseOverlayOpacity),
     );
+
+    //
+    if (materialState == MaterialState.pressed) {
+//      final double pressedOverlayOpacity = sliderTheme.overlayColor.withOpacity(baseOverlayOpacity)
+      canvas.drawCircle(
+        center,
+        radiusTween.evaluate(activationAnimation),
+        Paint()
+          ..color = sliderTheme.overlayColor.withOpacity(_pressedRippleOpacity),
+      );
+    }
   }
 }
 
@@ -2600,6 +2629,7 @@ class RectangularSliderValueIndicatorShape extends SliderComponentShape {
     double value,
     double textScaleFactor,
     Size sizeWithOverflow,
+    MaterialState materialState,
   }) {
     final Canvas canvas = context.canvas;
     final double scale = activationAnimation.value;
@@ -2863,6 +2893,7 @@ class PaddleSliderValueIndicatorShape extends SliderComponentShape {
     double value,
     double textScaleFactor,
     Size sizeWithOverflow,
+    MaterialState materialState,
   }) {
     assert(context != null);
     assert(center != null);

@@ -451,7 +451,7 @@ class Slider extends StatefulWidget {
     properties.add(ColorProperty('inactiveColor', inactiveColor));
     properties.add(ObjectFlagProperty<ValueChanged<double>>.has('semanticFormatterCallback', semanticFormatterCallback));
     properties.add(ObjectFlagProperty<FocusNode>.has('focusNode', focusNode));
-    properties.add(FlagProperty('autofocus', value: autofocus, ifTrue: 'autofocus'));
+//    properties.add(FlagProperty('autofocus', value: autofocus, ifTrue: 'autofocus'));
   }
 }
 
@@ -946,6 +946,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   final TextPainter _labelPainter = TextPainter();
   HorizontalDragGestureRecognizer _drag;
   TapGestureRecognizer _tap;
+  bool _isInteractionMouse = false;
   bool _active = false;
   double _currentDragValue = 0.0;
 
@@ -1107,7 +1108,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     if (value == _hasFocus)
       return;
     _hasFocus = value;
-    _updateForFocusOrHover(_hasFocus);
+//    _updateForFocusOrHover(_hasFocus);
     markNeedsSemanticsUpdate();
   }
 
@@ -1119,7 +1120,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     if (value == _hovering)
       return;
     _hovering = value;
-    _updateForFocusOrHover(_hovering);
+//    _updateForFocusOrHover(_hovering);
   }
 
   void _updateForFocusOrHover(bool hasFocusOrIsHovering) {
@@ -1327,6 +1328,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   void handleEvent(PointerEvent event, BoxHitTestEntry entry) {
     assert(debugHandleEvent(event, entry));
     if (event is PointerDownEvent && isInteractive) {
+      _isInteractionMouse = event.kind == PointerDeviceKind.mouse;
       // We need to add the drag first so that it has priority.
       _drag.addPointer(event);
       _tap.addPointer(event);
@@ -1393,7 +1395,11 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       isEnabled: isInteractive,
     );
 
-    if (!_overlayAnimation.isDismissed) {
+//    if (!_overlayAnimation.isDismissed) {
+      MaterialState materialState;
+      if (_hovering) materialState = MaterialState.hovered;
+      if (_hasFocus) materialState = MaterialState.focused;
+      if (!_overlayAnimation.isDismissed) materialState = MaterialState.pressed;
       _sliderTheme.overlayShape.paint(
         context,
         thumbCenter,
@@ -1405,8 +1411,9 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         sliderTheme: _sliderTheme,
         textDirection: _textDirection,
         value: _value,
+        materialState: materialState,
       );
-    }
+//    }
 
     if (isDiscrete) {
       final double tickMarkWidth = _sliderTheme.tickMarkShape.getPreferredSize(
